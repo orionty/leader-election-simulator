@@ -277,14 +277,7 @@ export function RaftComparisonTab() {
                         nodes <= 200 ? 60000 : 
                         nodes <= 500 ? 120000 : 240000
        
-       const gameResults = await new Promise<BatchResult>((resolve, reject) => {
-         let timeoutId: NodeJS.Timeout
-         
-         const cleanup = () => {
-           clearTimeout(timeoutId)
-           worker.terminate()
-         }
-         
+        const gameResults = await new Promise<BatchResult>((resolve, reject) => {
          worker.onmessage = (ev) => {
            const data = ev.data
            if (data?.type === 'tick') {
@@ -303,10 +296,15 @@ export function RaftComparisonTab() {
          
          worker.postMessage({ type: 'run', config: gameConfig })
          
-         timeoutId = setTimeout(() => {
+         const timeoutId = setTimeout(() => {
            cleanup()
            reject(new Error('Simulation timeout'))
          }, timeoutMs)
+         
+         function cleanup() {
+           clearTimeout(timeoutId)
+           worker.terminate()
+         }
        })
       
       setProgress(95)
@@ -372,7 +370,17 @@ export function RaftComparisonTab() {
            mean: 45,
            p50: 35,
            p95: 75,
-           leaderDistribution: { TitForTat: 1 },
+           leaderDistribution: { 
+             TitForTat: 1,
+             TitForTwoTat: 0,
+             AlwaysCooperate: 0,
+             AlwaysDefect: 0,
+             Random: 0,
+             Joss: 0,
+             Pavlov: 0,
+             Grudger: 0,
+             Friedman: 0
+           },
            cooperationRate: 0.7,
            trustMetrics: [{ strategy: 'TitForTat', avgTrust: 0.5, elections: 1 }]
          },
